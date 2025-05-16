@@ -1,0 +1,137 @@
+import argparse
+import numpy as np
+from utils import *
+import re
+import ast
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", type=str,
+                        default="webqsp", help="choose the dataset.")
+    parser.add_argument("--output_file", type=str,
+                        default="RJE_webqsp_deepseek", help="the output file name.")
+
+    args = parser.parse_args()
+
+    ground_truth_datas, question_string, output_datas = prepare_dataset_for_eval(args.dataset, args.output_file)
+
+    count_q = {}
+    right_q = {}
+    first_right = 0
+    first_error = 0
+    second_right = 0
+    second_error = 0
+
+    num_right = 0
+    num_error = 0
+    type_field = ''
+    aname_dict = {}
+    alias_dict = {}
+    add_ans_alias_dict = {}
+    call_num_list = []
+    time_list = []
+    token_num_list = {
+        "input": [],
+        "output": [],
+        "total": []
+    }
+
+    if args.dataset == 'cwq':
+        type_field = 'compositionality_type'
+        with open('../cope_alias/cwq_aname_dict.json', 'r', encoding='utf-8') as f:
+            aname_dict = json.load(f)
+        with open('../cope_alias/CWQ_aliase_data31158.json', 'r', encoding='utf-8') as f:
+            alias_dict = json.load(f)
+        with open('../cope_alias/ComplexWebQuestions_test_wans.json', 'r', encoding='utf-8') as f:
+            q_all_list = json.load(f)
+            for q_item in q_all_list:
+                ans_list = []
+                for ans_item in q_item['answers']:
+                    if ans_item['answer']:
+                        ans_list.append(ans_item['answer'])
+                    else:
+                        ans_list.append(ans_item['answer_id'])
+                    if 'aliases' in ans_item.keys():
+                        ans_list += ans_item['aliases']
+                
+                add_ans_alias_dict[q_item['question']] = ans_list
+
+    elif args.dataset == 'webqsp':
+        with open('../cope_alias/WQSP_aliase_data.json', 'r', encoding='utf-8') as f:
+            alias_dict = json.load(f)
+        
+    for data in output_datas:
+        try:
+            answers, ori_data = align(args.dataset, question_string, data, ground_truth_datas, aname_dict, alias_dict, add_ans_alias_dict)
+            if 'time' in data.keys():
+                call_num_list.append(data['call_num'])
+                time_list.append(data['time'])
+                token_num_list['input'].append(data['input_token'])
+                token_num_list['output'].append(data['output_token'])
+                token_num_list['total'].append(data['total_token'])
+
+            if type_field:
+                if ori_data[type_field] not in count_q.keys():
+                    count_q[ori_data[type_field]] = 0
+                count_q[ori_data[type_field]] += 1
+            try:
+                results = json.loads(data["results"])
+                response = results['Answer']
+                response = str(response).replace('[','').replace(']','').replace(',','') 
+                if exact_match(response, answers):
+                    if type_field:
+                        if ori_data[type_field] not in right_q.keys():
+                            right_q[ori_data[type_field]] = 0
+                        right_q[ori_data[type_field]] += 1
+                    num_right+=1
+                    if data['flag'] == "first":
+                        first_right += 1
+                    else: second_right += 1
+                else:
+                    num_error+=1
+                    if data['flag'] == "first":
+                        first_error += 1
+                    else: second_error += 1  
+            except:
+                response = data["results"]
+                if exact_match(response, answers):
+                    if type_field:
+                        if ori_data[type_field] not in right_q.keys():
+                            right_q[ori_data[type_field]] = 0
+                        right_q[ori_data[type_field]] += 1
+                    num_right+=1
+                    if data['flag'] == "first":
+                        first_right += 1
+                    else: second_right += 1
+                else:
+                    num_error+=1
+                    if data['flag'] == "first":
+                        first_error += 1
+                    else: second_error += 1  
+        except:
+            num_error += 1
+            if data['flag'] == "first":
+                first_error += 1
+            else:
+                second_error += 1
+
+    print("All: ", len(output_datas))
+    print("Exact Match: {}".format(float(num_right/len(output_datas)))) 
+    print("right: {}, error: {}".format(num_right, num_error))
+    print("first===right: {}, error: {}".format(first_right, first_error))
+    print("second==right: {}, error: {}".format(second_right, second_error))
+    print(sorted(count_q.items(), key=lambda x:x[0]))
+    print(sorted(right_q.items(), key=lambda x:x[0]))
+    for k, v in count_q.items():
+        if k in right_q.keys():
+            print(k, right_q[k]/v)
+        else:
+            print(k, '0')
+
+    print(len(call_num_list))
+    print('call num:',  np.mean(np.array(call_num_list)))
+    print('time:',  np.mean(np.array(time_list)))
+    for t_type, nu_l in token_num_list.items():
+        print(t_type, np.mean(np.array(nu_l)))
+
+
