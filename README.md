@@ -4,7 +4,7 @@
 
 ## Knowledge Graph
 
-Before running the system, you need to set up **Freebase** locally. Please follow the instructions in the [Freebase-Setup guide](https://github.com/GasolSun36/ToG/tree/main/Freebase).
+Before running the system, you need to set up **Freebase** locally. We will provide a link to a Freebase tutorial here after the publication of our follow-up paper.
 
 ## Installation
 
