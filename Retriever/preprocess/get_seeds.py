@@ -10,7 +10,8 @@ def get_seeds():
     output_dir = cfg.tmp_dir
     output_file = output_dir + "seeds.txt"
     if dataset == "webqsp":
-        input_list = ["train_raw.json", "test_raw.json"]
+        # input_list = ["train_raw.json", "test_raw.json"]
+        input_list = ["train.json", "test.json"]
     elif dataset == "cwq":
         input_list = ["train_raw.json", "dev_raw.json", "test_raw.json"]
 

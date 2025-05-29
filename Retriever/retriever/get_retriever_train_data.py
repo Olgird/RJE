@@ -25,7 +25,7 @@ def negative_sampling(
     kg: KnowledgeGraphCache,
 ):
     train_data_for_one_path = []
-
+    print(path_and_score)
     topic_entities = qa_path_score["topic_entities"]
     topic_entity_names = qa_path_score["topic_entity_names"]
     tpe = path_and_score["src"]

@@ -13,6 +13,7 @@ def generate_paths(
     kg: KnowledgeGraphCache,
     max_hop: int,
     path_max: int = 50,
+
 ):
     answers = {answer["kb_id"] for answer in qa["answers"]}
 
@@ -34,6 +35,9 @@ def generate_paths(
                 if min_hop > current_hop and current_hop > 1:
                     min_hop = current_hop
                 paths_with_score.update({tuple(current_path): score})
+
+
+
             if len(paths_with_score) >= path_max:
                 break
             if current_hop == max_hop or current_hop == min_hop:
@@ -103,8 +107,10 @@ def search_path_score(input_path, start, end, counter, counter_lock):
     for qa in data_list:
         paths_with_score = dict()
         generate_paths(qa, paths_with_score, kg, max_hop=max_hop)
-        # if not paths_with_score:
-        #     print("No path:" + qa["question"])
+
+
+
+
 
         path_list = sorted(paths_with_score.items(), key=lambda x: x[1], reverse=True)
         data_dict = {
@@ -116,6 +122,7 @@ def search_path_score(input_path, start, end, counter, counter_lock):
             "path_and_score": [
                 {"path": list(path[0]), "score": path[1]} for path in path_list
             ],
+
         }
         total_list.append(data_dict)
         with counter_lock:

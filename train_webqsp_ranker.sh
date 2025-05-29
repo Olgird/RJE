@@ -2,7 +2,7 @@
 
 python get_train_data.py
 
-python train_webqsp_ranker.py \
+python train_ranker.py \
     --POS_NUM 10 \
     --NEG_NUM 8 \
     --num_train_epochs 3 \

@@ -216,10 +216,7 @@ def main():
 
         avg_loss = total_loss / num_batches
         logging.info(f"Epoch {epoch+1}, Loss: {avg_loss}")
-        # if epoch < training_args.num_train_epochs - 1:
-        #     model.save_pretrained(training_args.output_dir + f"epoch_{epoch+1}/")
-        # else:
-        #     model.save_pretrained(training_args.output_dir + "final_model/")
+
         if epoch == training_args.num_train_epochs - 1:
             model.save_pretrained(training_args.output_dir + "final_model/")
 

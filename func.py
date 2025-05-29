@@ -74,8 +74,7 @@ def id2entity_name_or_type(entity_id):
             return results["results"]["bindings"][0]['tailEntity']['value']
         
     except:
-        print("Error in id2entity_name_or_type sparql")
-        print(sparql_query)
+
         return entity_id
     
 
@@ -115,7 +114,7 @@ def get_relations(path,topic_entity_id):
     return replace_relation_prefix(execurte_sparql(q))
 
 
-def retrive_path(TOP_K = 10,beam_nums = 10):    
+def retrive_path(TOP_K = 10,beam_nums = 10,test = False):    
     if cfg.dataset == "webqsp":
         MAX_HOP = 2
         terminate_prob = 0.4
@@ -125,15 +124,23 @@ def retrive_path(TOP_K = 10,beam_nums = 10):
     else:
         raise NotImplementedError
     
+    if test == False:
+        input_path = cfg.get_train_data["input_path"]
+        output_dir = cfg.get_train_data["output_dir"]
+        output_path = os.path.join(output_dir, f"K={TOP_K}.json")
 
-    input_path = cfg.inference["input_path"]
-    output_dir = cfg.inference["output_dir"]
-    output_path = os.path.join(output_dir, f"K={TOP_K}.json")
+    else:
+
+        input_path = cfg.prepare_running["input_path"]
+        output_dir = cfg.prepare_running["output_dir"]
+        output_path = os.path.join(output_dir, f"K={TOP_K}.json")
 
     if os.path.exists(output_path):
-        print(f"[Inference] {output_path} exists")
+        print(f"[get_train_data] {output_path} exists")
         return
     retriever_path = cfg.retriever["final_model"]
+
+
     tokenizer = AutoTokenizer.from_pretrained(cfg.pretrained_model["roberta_base"])
 
     if not os.path.exists(output_dir):

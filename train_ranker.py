@@ -2,6 +2,7 @@ import random
 import argparse
 import json
 import os
+from config import cfg
 
 import torch
 import torch.nn.functional as F
@@ -22,7 +23,6 @@ def pairwise_ranking_loss(pos_score, neg_score, margin=0.1):
 def read_json(file_path):
 
     try:
-        # 打开并读取文件内容
         with open(file_path, 'r', encoding='utf-8') as json_file:
             data = json.load(json_file)
         print(f"成功从 {file_path} 读取数据")
@@ -34,15 +34,13 @@ def read_json(file_path):
 def random_select(input_list, target_length=15):
     n = len(input_list)
     
-    # 处理空列表的情况
+
     if n == 0:
         return []
     
-    # 如果列表长度足够，直接随机抽取不重复的元素
     if n >= target_length:
         return random.sample(input_list, target_length)
     
-    # 如果列表长度不足，先提取所有元素，再补充随机选择的元素（可能有重复）
     selected = input_list.copy()
     additional = random.choices(input_list, k=target_length - n)
     selected.extend(additional)
@@ -68,8 +66,8 @@ class CustomDataset(Dataset):
 class SingleTowerModel(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.model = AutoModel.from_pretrained("FacebookAI/roberta-base")
-        self.classifier = torch.nn.Linear(768, 1)  
+        self.model = AutoModel.from_pretrained(cfg.pretrained_model["roberta_base"])
+        self.classifier = torch.nn.Linear(768, 1) 
 
     def forward(self, input_ids, attention_mask):
         
@@ -110,45 +108,41 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
 
-    qa_paths_list_top5 = read_json("qa_paths_list_top5_cwq_train.json")
+    qa_paths_list_top5 = read_json("qa_paths_list_top5_" + cfg.dataset + "_train.json")
 
     pos_neg_dict_list = []
 
 
     uncover = 0
     for qa_paths in tqdm(qa_paths_list_top5):
-        try:
-            entities_rels_list = qa_paths["entities_rels_list"]
-            answer_list = []
-            for answer in qa_paths["answers"]:
-                answer_list.append(answer["text"])
 
-            pos_neg_dict = {"question":qa_paths["question"],"pos":[],"neg":[]}
+        entities_rels_list = qa_paths["entities_rels_list"]
+        answer_list = []
+        for answer in qa_paths["answers"]:
+            answer_list.append(answer["text"])
 
-            
-            # for entities_rels in entities_rels_list:
+        pos_neg_dict = {"question":qa_paths["question"],"pos":[],"neg":[]}
 
-            for i in range(len(entities_rels_list)):
-                entities_rels = entities_rels_list[i]
-                for e_r in entities_rels:
-                    for e in e_r:
-                        flag_cover = False
-                        for a in answer_list:
-                            if a in e or e in a:
-                                flag_cover = True
-                                break
+        
+        # for entities_rels in entities_rels_list:
 
-                    if flag_cover:
-                        pos_neg_dict["pos"].append(e_r)
-                        if i!= 0 :
-                            for _ in range(args.hard_pos):
-                                pos_neg_dict["pos"].append(e_r)
-                    else:
-                        pos_neg_dict["neg"].append(e_r)
+        for i in range(len(entities_rels_list)):
+            entities_rels = entities_rels_list[i]
+            for e_r in entities_rels:
+                for e in e_r:
+                    flag_cover = False
+                    for a in answer_list:
+                        if a in e or e in a:
+                            flag_cover = True
+                            break
 
-        except Exception as e:
-            print(e)
-            continue
+                if flag_cover:
+                    pos_neg_dict["pos"].append(e_r)
+                    if i!= 0 :
+                        for _ in range(args.hard_pos):
+                            pos_neg_dict["pos"].append(e_r)
+                else:
+                    pos_neg_dict["neg"].append(e_r)
 
         if len(pos_neg_dict["pos"]) == 0:
             # print(qa_paths['question'])
@@ -161,11 +155,9 @@ if __name__ == '__main__':
         else:
             pos_neg_dict_list.append(pos_neg_dict)
 
-    print(len(pos_neg_dict_list))
-    print(uncover)
 
-    path = "FacebookAI/roberta-base"
-    tokenizer = AutoTokenizer.from_pretrained(path)
+    
+    tokenizer = AutoTokenizer.from_pretrained(cfg.pretrained_model["roberta_base"])
 
 
     train_data = []
@@ -297,14 +289,14 @@ if __name__ == '__main__':
                 recent_loss = 0
 
             if current_steps % save_interval == 0:
-                checkpoint_path = os.path.join("cwq",
+                checkpoint_path = os.path.join(
                         args.out_dir,
                         f"checkpoint-{current_steps}"
                     )
 
 
                 os.makedirs(checkpoint_path, exist_ok=True)
-                torch.save(stm.state_dict(), "cwq/"+args.out_dir+"/" + f"checkpoint-{current_steps}/"+"single_tower_roberta.pt")
+                torch.save(stm.state_dict(), args.out_dir+"/" + f"checkpoint-{current_steps}/"+"single_tower_roberta.pt")
 
 
             # backpropagation
@@ -324,14 +316,13 @@ if __name__ == '__main__':
         print(f"Epoch {epoch + 1}: Average loss={avg_loss}")
 
         if epoch == num_train_epochs - 1:
-            # stm.save_pretrained("entity_path_ranker_SingleTowerModel/final_model/")
+
             checkpoint_path = os.path.join(
-                        "cwq",
                         args.out_dir,
                         "final_model"
                     )
             os.makedirs(checkpoint_path, exist_ok=True)
 
-            torch.save(stm.state_dict(), "cwq/" +args.out_dir + "/" + "final_model/" + "single_tower_roberta.pt")
+            torch.save(stm.state_dict(), args.out_dir + "/" + "final_model/" + "single_tower_roberta.pt")
 
 

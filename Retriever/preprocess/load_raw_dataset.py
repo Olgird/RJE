@@ -44,31 +44,65 @@ def load_webqsp(input_path) -> list:
     dataset = dataset["Questions"]
 
     data_list = []
-    for json_obj in dataset:
-        id = json_obj["QuestionId"]
-        question = json_obj["ProcessedQuestion"]
-        for parse in json_obj["Parses"]:
-            topic_entities = [parse["TopicEntityMid"]]
-            topic_entity_names = [parse["TopicEntityName"]]
 
-            answer_list = []
-            for answer_obj in parse["Answers"]:
-                if answer_obj["AnswerType"] == "Entity":
-                    new_obj = {}
-                    new_obj["kb_id"] = answer_obj["AnswerArgument"]
-                    new_obj["text"] = answer_obj["EntityName"]
-                    answer_list.append(new_obj)
-            if not answer_list:
-                continue
+    if "test" in input_path:
+        for json_obj in dataset:
+            id = json_obj["QuestionId"]
+            question = json_obj["ProcessedQuestion"]
+
+            topic_entities = []
+            topic_entity_names = []
+
+            for parse in json_obj["Parses"]:
+                topic_entities += [parse["TopicEntityMid"]]
+                topic_entity_names += [parse["TopicEntityName"]]
+
+                answer_list = []
+                for answer_obj in parse["Answers"]:
+                    if answer_obj["AnswerType"] == "Entity":
+                        new_obj = {}
+                        new_obj["kb_id"] = answer_obj["AnswerArgument"]
+                        new_obj["text"] = answer_obj["EntityName"]
+                        answer_list.append(new_obj)
+                if not answer_list:
+                    continue
             data_list.append(
                 {
                     "id": id,
                     "question": question,
-                    "topic_entities": topic_entities,
-                    "topic_entity_names": topic_entity_names,
+                    "topic_entities": list(set(topic_entities)),
+                    "topic_entity_names": list(set(topic_entity_names)),
                     "answers": answer_list,
                 }
             )
+
+    else:
+
+        for json_obj in dataset:
+            id = json_obj["QuestionId"]
+            question = json_obj["ProcessedQuestion"]
+            for parse in json_obj["Parses"]:
+                topic_entities = [parse["TopicEntityMid"]]
+                topic_entity_names = [parse["TopicEntityName"]]
+
+                answer_list = []
+                for answer_obj in parse["Answers"]:
+                    if answer_obj["AnswerType"] == "Entity":
+                        new_obj = {}
+                        new_obj["kb_id"] = answer_obj["AnswerArgument"]
+                        new_obj["text"] = answer_obj["EntityName"]
+                        answer_list.append(new_obj)
+                if not answer_list:
+                    continue
+                data_list.append(
+                    {
+                        "id": id,
+                        "question": question,
+                        "topic_entities": topic_entities,
+                        "topic_entity_names": topic_entity_names,
+                        "answers": answer_list,
+                    }
+                )
     return data_list
 
 
@@ -126,7 +160,7 @@ def load_raw_dataset() -> None:
     if dataset == "webqsp":
         input_list = ["WebQSP.train.json", "WebQSP.test.json"]
         output_list = ["train.json", "test.json"]
-        dataset_dir = "data/datasets/WebQSP/data/"
+        dataset_dir = "../data/datasets/WebQSP/data/"
         data_file_list = [load_webqsp(dataset_dir + name) for name in input_list]
     elif dataset == "cwq":
         input_list = [
@@ -135,7 +169,7 @@ def load_raw_dataset() -> None:
             "ComplexWebQuestions_test_wans.json",
         ]
         output_list = ["train_raw.json", "dev_raw.json", "test_raw.json"]
-        dataset_dir = "data/datasets/ComplexWebQuestions/"
+        dataset_dir = "../data/datasets/ComplexWebQuestions/"
         data_file_list = [load_cwq(dataset_dir + name, name) for name in input_list]
 
     else:

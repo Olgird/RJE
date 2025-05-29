@@ -2,7 +2,7 @@ import json
 
 def read_output(file_path, question_string):
     answered_dict = {}
-    file_path = '../RJE/'+file_path + '.jsonl'
+    file_path = '../'+file_path + '.jsonl'
     with open(file_path, 'r', encoding='utf-8') as file:
         for i, line in enumerate(file):
             data = json.loads(line)

@@ -6,11 +6,13 @@ class Config:
         self.dataset = dataset 
         self.processed_dataset = "data/processed_datasets/" + dataset + "/"
 
-        self.result_dir = "data/results/" + dataset + "/" + "train/"
+        self.result_dir = "data/results/" + dataset 
         
 
         self.train_dir = "data/train/" + dataset + "/"
         self.pretrained_model = {"roberta_base": "FacebookAI/roberta-base"}
+
+        
         self.MAX_LEN = 128
         if dataset == "webqsp":
             
@@ -20,6 +22,7 @@ class Config:
                     "output_dir": "model_ckpt/" + dataset + "/retriever/",
                 },
                 "final_model": "model_ckpt/webqsp/retriever/final_model",
+
             }
 
         elif dataset == "cwq":
@@ -29,14 +32,20 @@ class Config:
                     "output_dir": "model_ckpt/" + dataset + "/retriever/",
                 },
                 "final_model": "model_ckpt/cwq/retriever/final_model",
-            }
+                }
 
-        self.inference = {
 
+
+        self.get_train_data = {
             "input_path": self.processed_dataset + "train.json",
-            "output_dir": self.result_dir,
+            "output_dir": self.result_dir + "/train/"
+        }
+
+        self.prepare_running = {
+            "input_path": self.processed_dataset + "test.json",
+            "output_dir": self.result_dir + "/test/"
         }
 
 
-cfg = Config("cwq")
+cfg = Config("webqsp")
     

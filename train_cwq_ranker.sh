@@ -3,7 +3,7 @@
 
 python get_train_data.py
 
-python train_cwq_ranker.py \
+python train_ranker.py \
     --POS_NUM 10 \
     --NEG_NUM 15 \
     --num_train_epochs 2 \

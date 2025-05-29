@@ -6,7 +6,7 @@ from SPARQLWrapper import JSON, SPARQLWrapper
 
 class KnowledgeGraphFreebase:
     def __init__(self) -> None:
-        self.sparql = SPARQLWrapper("http://localhost:3001/sparql")
+        self.sparql = SPARQLWrapper("http://localhost:8899/sparql")
         self.sparql.setReturnFormat(JSON)
 
     # usage: load_raw_dataset.py get_answer_names.py

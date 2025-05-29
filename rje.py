@@ -38,15 +38,15 @@ def remove_key_value(input_dict):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str,
-                        default="cwq", help="choose the dataset.")
+                        default="webqsp", help="choose the dataset.")
     parser.add_argument("--max_length", type=int,
                         default=2000, help="the max length of LLMs output.")
     parser.add_argument("--temperature_exploration", type=float,
-                        default=0.3, help="the temperature in exploration stage.")
+                        default=0.0, help="the temperature in exploration stage.")
     parser.add_argument("--temperature_reasoning", type=float,
-                        default=0.3, help="the temperature in reasoning stage.")
+                        default=0.0, help="the temperature in reasoning stage.")
     parser.add_argument("--depth", type=int,
-                        default=4, help="choose the search rounds of RJE.")
+                        default=2, help="choose the search rounds of RJE.")
     parser.add_argument("--select_num", type=int,
                         default=30, help="Top-N relations")
     parser.add_argument("--path_num", type=int,
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     parser.add_argument("--remove_unnecessary_rel", type=bool,
                         default=True, help="whether removing unnecessary relations.")
     parser.add_argument("--LLM_type", type=str,
-                        default="gpt35", help="base LLM model.")
+                        default="deepseek", help="base LLM model.")
     parser.add_argument("--opeani_api_keys", type=str,
                         default="", help="if the LLM_type is gpt-3.5-turbo or gpt-4, you need add your own openai api keys.")
 
@@ -64,17 +64,18 @@ if __name__ == '__main__':
 
     model = SentenceTransformer('model/msmarco-distilbert-base-tas-b')
 
+
     print("Start Running RJE on %s dataset." % args.dataset)
 
     if "cwq" in args.dataset:
-        with open("../data/id_name_dict_cwq.json", "r", encoding="utf-8") as f:
+        with open("data/id_name_dict_cwq.json", "r", encoding="utf-8") as f:
             entid_name = json.load(f)
-        with open("../data/name_id_dict_cwq.json", "r", encoding="utf-8") as f:
+        with open("data/name_id_dict_cwq.json", "r", encoding="utf-8") as f:
             name_entid = json.load(f)
     elif "webqsp" in args.dataset:
-        with open("../data/id_name_dict_webqsp.json", "r", encoding="utf-8") as f:
+        with open("data/id_name_dict_webqsp.json", "r", encoding="utf-8") as f:
             entid_name = json.load(f)
-        with open("../data/name_id_dict_webqsp.json", "r", encoding="utf-8") as f:
+        with open("data/name_id_dict_webqsp.json", "r", encoding="utf-8") as f:
             name_entid = json.load(f)
     else:
         print("dataset name error")
@@ -91,7 +92,7 @@ if __name__ == '__main__':
             question_ret = data[question_retriever]
 
             path = question_path[question_ret]
-            print('New question start:', question)
+            # print('New question start:', question)
 
             topic_entity = data['topic_entity']
             first_topic_entity = data['topic_entity']
@@ -148,7 +149,7 @@ if __name__ == '__main__':
                     response_dict = {"Sufficient": "No"}
 
             if response_dict['Sufficient'] == "Yes":
-                print("========Judgment_Done!======")
+                # print("========Judgment_Done!======")
                 save_2_jsonl(question, question_string, response, [], 1, token_num, start_time, "first", file_name=args.dataset+'_'+args.LLM_type)
                 continue
 
@@ -165,7 +166,7 @@ if __name__ == '__main__':
                 last_brace_l = response.rfind('{')
                 last_brace_r = response.rfind('}')
                 response = response[last_brace_l:last_brace_r+1]
-                print(response)
+                # print(response)
                 try:
                     response = json.loads(response)
                 except:
@@ -295,7 +296,7 @@ if __name__ == '__main__':
                     total_candidates, total_relations, total_entities_id, total_topic_entities, total_head = update_history(entity_candidates, ent_rel, entity_candidates_id, total_candidates, total_relations, total_entities_id, total_topic_entities, total_head)
                 
                 depth_ent_rel_ent_dict[depth] = ent_rel_ent_dict
-                pprint.pprint(convert_dict_name(ent_rel_ent_dict, entid_name))
+                # pprint.pprint(convert_dict_name(ent_rel_ent_dict, entid_name))
 
                 if len(total_candidates) == 0:
 
@@ -317,7 +318,7 @@ if __name__ == '__main__':
                 for kk in cur_token.keys():
                     all_t[kk] += cur_token[kk]
 
-                pprint.pprint(convert_dict_name(new_ent_rel_ent_dict, entid_name))
+                # pprint.pprint(convert_dict_name(new_ent_rel_ent_dict, entid_name))
                 if flag:
                     call_num += 1
                     response, sufficient, answer, reason, token_num = reasoning(question, topic_entity_question, topic_entity_path, entid_name, name_entid, args)

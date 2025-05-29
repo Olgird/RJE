@@ -18,6 +18,8 @@ if dataset == "webqsp":
     LIMIT1 = 500
     LIMIT2 = 800
 elif dataset == "cwq":
+
+    # hop = 4
     hop = 3
     num_processes = 20
     LIMIT1 = 500

@@ -6,7 +6,12 @@ from transformers import AutoModel, AutoTokenizer
 import torch.nn.functional as F
 from tqdm import trange
 
+from config import cfg
+from func import *
 import argparse
+
+retrive_path(test=True)
+
 def read_json(file_path):
 
     try:
@@ -20,11 +25,105 @@ def read_json(file_path):
     
 
 
+qa_paths_list = []
+
+
+with open("data/results/"+cfg.dataset+"/test/K=10.json","r") as f:
+
+    for line in f:
+
+        qa_paths_list.append(json.loads(line)) 
+
+
+import json
+from typing import Any
+
+def write_json(data: Any, file_path: str, indent: int = 4, ensure_ascii: bool = False, sort_keys: bool = True) -> None:
+
+
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(
+            data,
+            f,
+            indent=indent,
+            ensure_ascii=ensure_ascii,
+            sort_keys=sort_keys,
+            separators=(',', ': ') 
+        )
+
+
+
+
+uncover = 0
+
+id_name_dict = {}
+name_id_dict = {}
+
+for qa_paths in tqdm(qa_paths_list):
+    
+    for topic_entity,topic_entity_name in zip(qa_paths["topic_entities"],qa_paths["topic_entity_names"]):
+        id_name_dict[topic_entity] = topic_entity_name
+        name_id_dict[topic_entity_name] = topic_entity
+
+
+    ans_set = set()
+    for answer in qa_paths["answers"]:
+        ans_set.add(answer["kb_id"])
+
+    entities_rels_list = []
+    flag_cover = False
+    for path_with_score in qa_paths["path_with_score"][:5]:
+        
+        entities_rels_list.append([])
+
+        topic_entity_id = path_with_score['src'][0]
+        path = path_with_score['path']
+        
+        try:
+            entities_list = path_2_entities_list(topic_entity_id,path)
+        except:
+            continue
+
+        for entities in entities_list:
+            entities_rels_list[-1].append([])
+            entities_rels_list[-1][-1].append(path_with_score['src'][1])
+            
+            
+            for i in range(len(entities)):
+                entities_rels_list[-1][-1].append(path[i])
+                entity = entities[i]
+                
+
+                entity_name = id2entity_name_or_type(entity)
+                entities_rels_list[-1][-1].append(entity_name)
+                
+                id_name_dict[entity] = entity_name
+                name_id_dict[entity_name] = entity
+                
+                if entity in ans_set:
+                    flag_cover = True
+                    break
+
+                
+    qa_paths['entities_rels_list'] = entities_rels_list
+    if not flag_cover:
+        print(qa_paths['question'])
+        print(entities_rels_list)
+        print(qa_paths["path_with_score"])
+        uncover += 1
+
+
+
+write_json(qa_paths_list, "qa_paths_list_top5_" + cfg.dataset + "_test.json")
+
+write_json(id_name_dict, "data/id_name_dict_" + cfg.dataset + ".json")
+write_json(name_id_dict, "data/name_id_dict_" + cfg.dataset + ".json")
+
 
 class SingleTowerModel(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.model = AutoModel.from_pretrained("FacebookAI/roberta-base")
+        self.model = AutoModel.from_pretrained(cfg.pretrained_model["roberta_base"])
         self.classifier = torch.nn.Linear(768, 1) 
 
     def forward(self, input_ids, attention_mask):
@@ -56,9 +155,9 @@ def get_scores(texts, tokenizer, model):
 
 device = 'cuda'
 
-path_tokenizer = "FacebookAI/roberta-base"
-ranker_path = "webQSP_ranker/webqsp_ranke/final_model/single_tower_roberta.pt"
-qa_paths_list_top5 = read_json("qa_paths_list_top5_cwq_test.json")
+path_tokenizer = cfg.pretrained_model["roberta_base"]
+ranker_path = "webqsp_ranker/final_model/single_tower_roberta.pt"
+qa_paths_list_top5 = read_json("qa_paths_list_top5_" + cfg.dataset + "_test.json")
 
 tokenizer = AutoTokenizer.from_pretrained(path_tokenizer)
 
@@ -130,17 +229,6 @@ for qa_paths_list in tqdm(qa_paths_list_top5):
 import json
 from typing import Any
 
-def write_json(data: Any, file_path: str, indent: int = 4, ensure_ascii: bool = False, sort_keys: bool = True) -> None:
-
-    with open(file_path, 'w', encoding='utf-8') as f:
-        json.dump(
-            data,
-            f,
-            indent=indent,
-            ensure_ascii=ensure_ascii,
-            sort_keys=sort_keys,
-            separators=(',', ': ') 
-        )
 
 
 q_entity_path_dict = dict()
@@ -156,4 +244,4 @@ for i in range(len(qa_paths_list_top5)):
     q_entity_path_dict.update({question: path_list})
 
 
-write_json(q_entity_path_dict,"q_entity_path_dict_cwq_top5.json")
+write_json(q_entity_path_dict,"data/q_entity_path_dict_" + cfg.dataset + ".json")

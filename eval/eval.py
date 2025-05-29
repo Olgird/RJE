@@ -9,7 +9,7 @@ if __name__ == '__main__':
     parser.add_argument("--dataset", type=str,
                         default="webqsp", help="choose the dataset.")
     parser.add_argument("--output_file", type=str,
-                        default="RJE_webqsp_deepseek", help="the output file name.")
+                        default="RJE_webqsp_gpt35", help="the output file name.")
 
     args = parser.parse_args()
 
@@ -17,14 +17,20 @@ if __name__ == '__main__':
 
     count_q = {}
     right_q = {}
+    re_list = []
+    error_list = []
     first_right = 0
     first_error = 0
     second_right = 0
     second_error = 0
+    ranker_right = []
 
     num_right = 0
     num_error = 0
-    type_field = ''
+    error_question = []
+    q_list = []
+
+    part_q = False
     aname_dict = {}
     alias_dict = {}
     add_ans_alias_dict = {}
@@ -37,7 +43,7 @@ if __name__ == '__main__':
     }
 
     if args.dataset == 'cwq':
-        type_field = 'compositionality_type'
+
         with open('../cope_alias/cwq_aname_dict.json', 'r', encoding='utf-8') as f:
             aname_dict = json.load(f)
         with open('../cope_alias/CWQ_aliase_data31158.json', 'r', encoding='utf-8') as f:
@@ -59,9 +65,14 @@ if __name__ == '__main__':
     elif args.dataset == 'webqsp':
         with open('../cope_alias/WQSP_aliase_data.json', 'r', encoding='utf-8') as f:
             alias_dict = json.load(f)
-        
+
+
     for data in output_datas:
+        if data['flag'] == 'second':
+            q_list.append(data[question_string])
         try:
+
+
             answers, ori_data = align(args.dataset, question_string, data, ground_truth_datas, aname_dict, alias_dict, add_ans_alias_dict)
             if 'time' in data.keys():
                 call_num_list.append(data['call_num'])
@@ -70,44 +81,89 @@ if __name__ == '__main__':
                 token_num_list['output'].append(data['output_token'])
                 token_num_list['total'].append(data['total_token'])
 
-            if type_field:
-                if ori_data[type_field] not in count_q.keys():
-                    count_q[ori_data[type_field]] = 0
-                count_q[ori_data[type_field]] += 1
-            try:
-                results = json.loads(data["results"])
-                response = results['Answer']
-                response = str(response).replace('[','').replace(']','').replace(',','') 
-                if exact_match(response, answers):
-                    if type_field:
-                        if ori_data[type_field] not in right_q.keys():
-                            right_q[ori_data[type_field]] = 0
-                        right_q[ori_data[type_field]] += 1
-                    num_right+=1
-                    if data['flag'] == "first":
-                        first_right += 1
-                    else: second_right += 1
+
+
+            
+            results = json.loads(data["results"])
+            
+            if 'Answer' not in results.keys():
+                continue
+            response = results['Answer']
+            if isinstance(response, list):
+                flag = 0
+
+
+                if len(response) == 1:
+                    if exact_match(str(response[0]), answers):
+                        num_right+=1
+                        if data['flag'] == "first":
+                            ranker_right.append(data[question_string])
+                            first_right += 1
+                        else: second_right += 1
+                        flag = 1
+                        
                 else:
+                    if exact_match(str(response), answers):
+                        num_right+=1
+                        if data['flag'] == "first":
+                            ranker_right.append(data[question_string])
+                            first_right += 1
+                        else: second_right += 1
+                        flag = 1
+                        
+                
+                if not flag:
                     num_error+=1
                     if data['flag'] == "first":
                         first_error += 1
-                    else: second_error += 1  
-            except:
-                response = data["results"]
-                if exact_match(response, answers):
-                    if type_field:
-                        if ori_data[type_field] not in right_q.keys():
-                            right_q[ori_data[type_field]] = 0
-                        right_q[ori_data[type_field]] += 1
-                    num_right+=1
-                    if data['flag'] == "first":
-                        first_right += 1
-                    else: second_right += 1
+                    else: second_error += 1                
+                    error_question.append(data[question_string])
+
+            else:
+                if ',' in response:
+                    response = [item.strip() for item in response.split(",")]
+                    flag = 0
+
+
+                    if len(response) == 1:
+                        if exact_match(str(response[0]), answers):
+                            num_right+=1
+                            if data['flag'] == "first":
+                                ranker_right.append(data[question_string])
+                                first_right += 1
+                            else: second_right += 1
+                            flag = 1
+                            
+                    else:
+                        if exact_match(str(response), answers):
+                            num_right+=1
+                            if data['flag'] == "first":
+                                ranker_right.append(data[question_string])
+                                first_right += 1
+                            else: second_right += 1
+                            flag = 1
+                            
+                    
+                    if not flag:
+                        num_error+=1
+                        if data['flag'] == "first":
+                            first_error += 1
+                        else: second_error += 1                
+                        error_question.append(data[question_string])
                 else:
-                    num_error+=1
-                    if data['flag'] == "first":
-                        first_error += 1
-                    else: second_error += 1  
+                    if exact_match(response, answers):
+                        num_right+=1
+                        if data['flag'] == "first":
+                            ranker_right.append(data[question_string])
+                            first_right += 1
+                        else: 
+                            second_right += 1                    
+                    else:
+                        if data['flag'] == "first":
+                            first_error += 1
+                        else: second_error += 1                    
+                        num_error+=1
+                        error_question.append(data[question_string])
         except:
             num_error += 1
             if data['flag'] == "first":
@@ -115,20 +171,13 @@ if __name__ == '__main__':
             else:
                 second_error += 1
 
+
     print("All: ", len(output_datas))
     print("Exact Match: {}".format(float(num_right/len(output_datas)))) 
     print("right: {}, error: {}".format(num_right, num_error))
     print("first===right: {}, error: {}".format(first_right, first_error))
     print("second==right: {}, error: {}".format(second_right, second_error))
-    print(sorted(count_q.items(), key=lambda x:x[0]))
-    print(sorted(right_q.items(), key=lambda x:x[0]))
-    for k, v in count_q.items():
-        if k in right_q.keys():
-            print(k, right_q[k]/v)
-        else:
-            print(k, '0')
 
-    print(len(call_num_list))
     print('call num:',  np.mean(np.array(call_num_list)))
     print('time:',  np.mean(np.array(time_list)))
     for t_type, nu_l in token_num_list.items():

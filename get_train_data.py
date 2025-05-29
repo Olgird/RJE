@@ -6,7 +6,7 @@ retrive_path()
 qa_paths_list = []
 
 
-with open("data/results/"+cfg.dataset+"/K=10.json","r") as f:
+with open("data/results/"+cfg.dataset+"/train/K=10.json","r") as f:
 
     for line in f:
 

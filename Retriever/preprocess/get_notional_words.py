@@ -105,6 +105,7 @@ def pos_and_chunk(data_list, tagger):
             name.lower()
             for name in data["topic_entity_names"]
             # if name and name.lower() not in reserved_names
+            if name
         ]
 
         texts = [token.text.lower() for token in question]

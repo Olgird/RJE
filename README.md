@@ -4,7 +4,7 @@
 
 ## Knowledge Graph
 
-Before running the system, you need to set up **Freebase** locally. We will provide a link to a Freebase tutorial here after the publication of our follow-up paper.
+Before running the system, you need to set up **Freebase** locally. We will provide a link to a Freebase installation tutorial at a later time.
 
 ## Installation
 
