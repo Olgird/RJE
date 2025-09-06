@@ -72,12 +72,15 @@ python eval.py
 
 
 # Citation
-If you are interested in or inspired by this work, please kindly cite it as follows:
-```sh
+
+If you find this work useful or are inspired by it, please cite our paper:
+```bibtex
 @inproceedings{Lin2025RJE,
-	title={RJE: A Retrieval-Judgment-Exploration Framework for Efficient Knowledge Graph Question Answering with LLMs},
-	author={Lin, Can and Jiang, Zhengwang and Zheng, Ling and Zhao, Qi and Zhang, Yuhang and Song, Qi and Zhou, Wangqiu},
-	booktitle={Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing},
-	year={2025}
+  title={RJE: A Retrieval-Judgment-Exploration Framework for Efficient Knowledge Graph Question Answering with LLMs},
+  author={Lin, Can and Jiang, Zhengwang and Zheng, Ling and Zhao, Qi and Zhang, Yuhang and Song, Qi and Zhou, Wangqiu},
+  booktitle={Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing},
+  year={2025}
 }
+```
+
 ```
