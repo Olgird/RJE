@@ -4,7 +4,16 @@
 
 ## Knowledge Graph
 
-Before running the system, you need to set up **Freebase** locally. We will provide a link to a Freebase installation tutorial at a later time.
+Before running the system, you need to set up **Freebase** locally. Please follow the [installation instructions](https://github.com/GasolSun36/ToG/tree/main/Freebase).
+
+
+## Coed
+Our implementation is built upon the following open-source projects:
+
+- [ToG](https://github.com/GasolSun36/ToG)
+- [RDP](https://github.com/yooboh/RD-P)
+
+We sincerely appreciate the authors for making their code publicly available.
 
 ## Installation
 
@@ -59,4 +68,16 @@ python rje.py \
 ```bash
 cd eval
 python eval.py
+```
+
+
+# Citation
+If you are interested in or inspired by this work, please kindly cite it as follows:
+```sh
+@inproceedings{Lin2025RJE,
+	title={RJE: A Retrieval-Judgment-Exploration Framework for Efficient Knowledge Graph Question Answering with LLMs},
+	author={Lin, Can and Jiang, Zhengwang and Zheng, Ling and Zhao, Qi and Zhang, Yuhang and Song, Qi and Zhou, Wangqiu},
+	booktitle={Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing},
+	year={2025}
+}
 ```
