@@ -7,10 +7,10 @@
 Before running the system, you need to set up **Freebase** locally. Please follow the [installation instructions](https://github.com/GasolSun36/ToG/tree/main/Freebase).
 
 
-## Coed
+## Code
 Our implementation is built upon the following open-source projects:
 
-- [ToG](https://github.com/GasolSun36/ToG)
+- [PoG](https://github.com/liyichen-cly/PoG)
 - [RDP](https://github.com/yooboh/RD-P)
 
 We sincerely appreciate the authors for making their code publicly available.
